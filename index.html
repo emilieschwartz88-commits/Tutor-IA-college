@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tutor’IA en Français</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#14213d;--mute:#5d667a;--acc:#3b3fa6;--hl:#ffe66d;--line:#dde1ea;--ok:#2d7a4b;--ko:#b3432f}
+@media(prefers-color-scheme:dark){:root{--bg:#10131c;--card:#1a1f2d;--ink:#eef0f6;--mute:#9aa3b8;--acc:#9ea3ff;--hl:#6b5d12;--line:#2b3246;--ok:#6fcf97;--ko:#f08a76}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 18px 96px}
+h1,h2,h3{font-family:"Iowan Old Style",Georgia,serif;font-weight:600;line-height:1.25;margin:0 0 .5em}
+h1{font-size:1.5rem}h2{font-size:1.25rem}h3{font-size:1.05rem}
+.hl{background:linear-gradient(transparent 55%,var(--hl) 55%)}
+p{margin:.4em 0 .9em}.mute{color:var(--mute);font-size:.92rem}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;gap:4px;padding:6px env(safe-area-inset-right) calc(6px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
+nav button{flex:1;max-width:200px;border:0;background:none;color:var(--mute);font:inherit;font-size:.95rem;padding:10px 6px;border-radius:8px;cursor:pointer}
+nav button[aria-current=true]{color:var(--acc);font-weight:600;box-shadow:inset 0 -3px 0 var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+button,.btn{font:inherit;cursor:pointer}
+.btn{display:inline-block;background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600}
+.btn.alt{background:none;color:var(--acc);border:1px solid var(--acc)}
+.btn:disabled{opacity:.45;cursor:default}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 13px;font-size:.93rem}
+.chip[aria-pressed=true]{border-color:var(--acc);background:var(--acc);color:#fff}
+textarea{width:100%;min-height:90px;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.comp{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:10px;color:var(--ink)}
+.comp b{font-weight:600}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:11px 14px;margin-bottom:8px}
+.opt.ok{border-color:var(--ok);box-shadow:inset 4px 0 var(--ok)}.opt.ko{border-color:var(--ko);box-shadow:inset 4px 0 var(--ko)}
+.fb{border-left:4px solid var(--acc);padding:6px 12px;margin:12px 0;background:var(--card)}
+.indice{border-left:4px solid var(--hl);padding:6px 12px;margin:10px 0;background:var(--card);white-space:pre-wrap}
+#prev{max-width:100%;max-height:220px;border-radius:8px;margin:8px 0;display:none}
+.av{width:160px;height:160px;border-radius:20px;flex:none}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.sw:disabled{opacity:.3;cursor:default}.sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);padding:0}.sw[aria-pressed=true]{border-color:var(--ink)}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav aria-label="Navigation">
+  <button data-t="aide">Mon aide</button>
+  <button data-t="train">M’entraîner</button>
+  <button data-t="parcours">Mon parcours</button>
+</nav>
+
+<script>
+
+const COMP={
+ gram:{n:"Grammaire",d:"Natures, fonctions, propositions"},
+ conj:{n:"Conjugaison",d:"Temps, modes, accords du verbe"},
+ orth:{n:"Orthographe",d:"Accords, homophones, participes"},
+ lex:{n:"Vocabulaire",d:"Sens, figures, familles de mots"},
+ lect:{n:"Lecture",d:"Comprendre et interpréter un texte"},
+ ecr:{n:"Écriture",d:"Construire et améliorer ses phrases"}
+};
+const Q={
+gram:[
+ {q:"Dans « Le chat que j’ai adopté dort », quelle est la fonction de « que j’ai adopté » ?",o:["Complément du nom (proposition relative)","Complément circonstanciel","Sujet du verbe dort"],a:0,r:"Une proposition subordonnée relative commence par un pronom relatif (qui, que, dont, où) et complète un nom : ici « chat »."},
+ {q:"Dans « Elle rit parce qu’il pleut », « parce qu’il pleut » exprime…",o:["La conséquence","La cause","L’opposition"],a:1,r:"« Parce que » introduit la cause : on peut poser la question « pourquoi ? »."},
+ {q:"Quelle phrase est à la voix passive ?",o:["Le directeur félicite les élèves.","Les élèves sont félicités par le directeur.","Les élèves se félicitent."],a:1,r:"Voix passive : sujet + être + participe passé (+ complément d’agent). Le sujet subit l’action."},
+ {q:"Dans « Je lui parle », « lui » est…",o:["COD","COI","Sujet"],a:1,r:"On dit « parler à quelqu’un » : « lui » remplace « à lui/à elle », c’est donc un complément d’objet indirect."}],
+conj:[
+ {q:"Choisis la bonne forme : « Il faut que tu ___ ta leçon. »",o:["apprends","apprennes","apprendras"],a:1,r:"Après « il faut que », on emploie le subjonctif présent : que tu apprennes."},
+ {q:"« Quand il ___ arrivé, nous avions déjà mangé. » Quel temps pour une action antérieure dans le passé ?",o:["Plus-que-parfait","Passé simple","Futur antérieur"],a:0,r:"Le plus-que-parfait (auxiliaire à l’imparfait + participe passé) exprime une action antérieure à une autre action passée."},
+ {q:"Quelle forme est correcte au conditionnel présent ?",o:["Je viendrais","Je viendrai","Je viendrais-t"],a:0,r:"Conditionnel présent = radical du futur + terminaisons de l’imparfait : je viendr-ais."},
+ {q:"« Ils ___ le château » (passé simple de voir).",o:["voyaient","virent","verront"],a:1,r:"Passé simple de voir : je vis, tu vis, il vit, nous vîmes, vous vîtes, ils virent."}],
+orth:[
+ {q:"Choisis la bonne orthographe : « Les fleurs que j’ai ___ »",o:["cueilli","cueillies","cueillis"],a:1,r:"Avec avoir, le participe s’accorde avec le COD placé avant le verbe : « que » (= les fleurs) → féminin pluriel."},
+ {q:"« Il ___ passer le bac. » Quelle écriture ?",o:["a","à","as"],a:0,r:"Test : on peut remplacer par « avait ». Ici « il a » = avoir."},
+ {q:"Quelle phrase est correcte ?",o:["Elles se sont lavé les mains.","Elles se sont lavées les mains.","Elles se sont lavés les mains."],a:0,r:"Le COD (« les mains ») est placé après le verbe : pas d’accord du participe."},
+ {q:"« Leurs / leur » : « Ils ont perdu ___ clés. »",o:["leur","leurs"],a:1,r:"« Leurs » accompagne un nom pluriel (clés) ; « leur » seul est invariable devant un verbe."}],
+lex:[
+ {q:"« Cet orage est une colère du ciel » : quelle figure de style ?",o:["Comparaison","Métaphore","Antithèse"],a:1,r:"La métaphore rapproche deux éléments sans outil de comparaison (comme, pareil à…)."},
+ {q:"Que signifie le préfixe « anti- » dans « antidote » ?",o:["Avant","Contre","Autour"],a:1,r:"« Anti- » vient du grec et signifie « contre »."},
+ {q:"Quel mot appartient à la famille de « terre » ?",o:["Atterrir","Terrible","Tertre"],a:0,r:"Atterrir contient le radical « terr- » (poser sur la terre)."},
+ {q:"Lequel est un synonyme de « éphémère » ?",o:["Durable","Fugace","Éclatant"],a:1,r:"Éphémère : qui dure très peu de temps. Fugace en est un synonyme."}],
+lect:[
+ {q:"« Il était minuit ; la maison dormait, seule une fenêtre brillait. » Quelle atmosphère ?",o:["Joyeuse","Mystérieuse","Comique"],a:1,r:"Pour trouver l’atmosphère, relève les indices : moment (minuit), silence, lumière isolée."},
+ {q:"Dans un récit, le narrateur qui dit « je » et participe à l’histoire est…",o:["Externe","Omniscient","Interne (personnage)"],a:2,r:"Le narrateur-personnage emploie la 1re personne et connaît seulement ce qu’il vit."},
+ {q:"Un texte dont le but est de convaincre est…",o:["Narratif","Argumentatif","Descriptif"],a:1,r:"Le texte argumentatif défend une thèse avec des arguments et des exemples."},
+ {q:"Que montre l’emploi du point d’exclamation et de phrases courtes ?",o:["Le calme","L’émotion ou l’urgence","L’ennui"],a:1,r:"La ponctuation et le rythme traduisent l’état du personnage ou du narrateur."}],
+ecr:[
+ {q:"Quel connecteur exprime l’opposition ?",o:["Donc","Cependant","Car"],a:1,r:"« Cependant, pourtant, mais, toutefois » marquent l’opposition."},
+ {q:"Quelle phrase évite la répétition ? « Paul ouvre la porte. Paul entre. »",o:["Paul ouvre la porte, puis il entre.","Paul ouvre la porte et Paul entre.","Paul ouvre la porte Paul entre."],a:0,r:"On remplace la répétition par un pronom et on relie les phrases avec un connecteur."},
+ {q:"Dans un paragraphe argumentatif, un exemple sert à…",o:["Illustrer l’argument","Conclure le devoir","Annoncer le plan"],a:0,r:"Structure : argument + explication + exemple."},
+ {q:"Quelle phrase est la plus précise ?",o:["Il y a une chose dans le jardin.","Un vieux chêne se dresse au fond du jardin.","Il y a un arbre."],a:1,r:"Remplace « il y a » et « chose » par un verbe précis et un nom précis, enrichis d’un adjectif."}]
+};
+const PLUS={
+gram:[
+ {q:"Dans « Épuisé, il s’assit », « épuisé » est…",o:["Attribut du sujet","Épithète détachée (apposition)","COD"],a:1,r:"Un adjectif séparé du sujet par une virgule est une épithète détachée : il apporte une information sur le sujet."},
+ {q:"Quelle phrase est une phrase complexe ?",o:["Il pleut.","Je sors même s’il pleut.","Quel orage !"],a:1,r:"Une phrase complexe contient plusieurs verbes conjugués, donc plusieurs propositions."},
+ {q:"Quelle est la nature de « dont » dans « Le livre dont je parle » ?",o:["Pronom relatif","Conjonction de subordination","Adverbe"],a:0,r:"« Dont » remplace un groupe introduit par « de » et relie la relative à son antécédent (« livre »)."},
+ {q:"« Si j’avais le temps, je lirais. » exprime…",o:["La cause","La condition (hypothèse)","Le but"],a:1,r:"« Si » + imparfait, puis conditionnel présent : on imagine une hypothèse."}],
+conj:[
+ {q:"Futur simple de « envoyer » à la 1re personne du singulier ?",o:["J’enverrai","J’envoierai","J’envoyerai"],a:0,r:"Envoyer a un radical irrégulier au futur : enverr- (j’enverrai)."},
+ {q:"« Il faut que nous ___ à la bibliothèque » (aller).",o:["allons","allions","aillons"],a:1,r:"Au subjonctif présent, aller donne : que nous allions."},
+ {q:"Impératif présent de « prendre » à la 2e personne du singulier ?",o:["Prend","Prends","Prennes"],a:1,r:"Aux verbes en -dre, le « s » de la 2e personne est conservé : prends."},
+ {q:"Dans « Qu’il vienne ! », quel est le mode du verbe ?",o:["Subjonctif","Impératif","Indicatif"],a:0,r:"« Que » + verbe à la 3e personne pour exprimer un ordre ou un souhait : subjonctif présent."}],
+orth:[
+ {q:"« Je crois ___ viendra demain. »",o:["quelle","qu’elle","quel’"],a:1,r:"Test : remplace par « qu’il ». Si c’est possible, on écrit « qu’elle »."},
+ {q:"« Ils se sont ___ longuement. »",o:["parlé","parlés","parler"],a:0,r:"« Se » est ici COI (parler à quelqu’un) : le participe reste invariable."},
+ {q:"« Ils sont ___ venus. »",o:["tout","tous","touts"],a:1,r:"« Tous » (pronom) se prononce avec le « s » et reprend « ils »."},
+ {q:"Quel est le pluriel de « un festival » ?",o:["festivaux","festivals","festivales"],a:1,r:"Festival fait exception : il prend un simple « s » au pluriel."}],
+lex:[
+ {q:"« Il fait un temps de chien » est…",o:["Une expression imagée","Un mot-valise","Une comparaison"],a:0,r:"Une expression figée dont le sens n’est pas littéral : elle signifie un mauvais temps."},
+ {q:"Dire « ce n’est pas mauvais » pour « c’est très bon », c’est…",o:["Une hyperbole","Une litote","Une personnification"],a:1,r:"La litote dit moins pour faire comprendre plus."},
+ {q:"« Je te l’ai dit mille fois ! » est…",o:["Une litote","Une comparaison","Une hyperbole"],a:2,r:"L’hyperbole exagère pour insister."},
+ {q:"Quel groupe de mots forme le champ lexical de la peur ?",o:["Effroi, frisson, angoisse","Sourire, joie, éclat","Marche, route, chemin"],a:0,r:"Un champ lexical rassemble des mots qui se rapportent à une même idée."}],
+lect:[
+ {q:"Qu’est-ce que la focalisation interne ?",o:["On voit tout à travers les yeux d’un personnage","Le narrateur sait tout","On ne voit que l’extérieur"],a:0,r:"Interne : on perçoit pensées et sensations d’un personnage. Omnisciente : le narrateur sait tout. Externe : on observe de l’extérieur."},
+ {q:"Dans un récit, quel temps sert surtout aux descriptions et au décor ?",o:["Le passé simple","L’imparfait","Le futur"],a:1,r:"L’imparfait pour l’arrière-plan, le passé simple pour les actions de premier plan."},
+ {q:"Un texte où l’auteur raconte sa propre vie est…",o:["Une fable","Un roman policier","Une autobiographie"],a:2,r:"Autobiographie : auteur, narrateur et personnage principal sont la même personne."},
+ {q:"Dans une fable, la moralité est…",o:["La description du lieu","La leçon à retenir","Le portrait du héros"],a:1,r:"La moralité dégage l’enseignement du récit, au début ou à la fin."}],
+ecr:[
+ {q:"Quel connecteur ajoute un argument ?",o:["Pourtant","De plus","En conclusion"],a:1,r:"« De plus, en outre, par ailleurs » ajoutent un argument."},
+ {q:"Quelle phrase est correctement ponctuée ?",o:["Il rentra fatigué, et, s’endormit.","Il rentra, fatigué, et s’endormit.","Il rentra. fatigué et s’endormit."],a:1,r:"On encadre l’épithète détachée par des virgules ; on ne sépare pas le verbe de « et »."},
+ {q:"Pour décrire une atmosphère inquiétante, on choisit…",o:["Un vocabulaire joyeux","Des mots et des sons qui suggèrent le danger","Des phrases longues et neutres"],a:1,r:"Vocabulaire, rythme et sonorités doivent servir l’effet recherché."},
+ {q:"La phrase de conclusion d’un paragraphe sert à…",o:["Changer de sujet","Ajouter un nouvel exemple","Reformuler l’idée principale"],a:2,r:"Elle clôt le paragraphe en rappelant l’idée défendue."}]
+};
+for(const k in PLUS)Q[k].push(...PLUS[k]);
+const METHODES={
+ "Je ne comprends pas la consigne":"1. Entoure le verbe d’action de la consigne (relève, justifie, transforme…).\n2. Reformule-la avec tes mots.\n3. Repère ce qui est demandé : combien de réponses ? sous quelle forme ?",
+ "Je ne sais pas par où commencer":"1. Lis le texte ou la phrase en entier, puis relis-la en surlignant les mots clés.\n2. Demande-toi : quelle notion de cours est concernée ?\n3. Essaie la première question seule, même au brouillon.",
+ "Je veux vérifier ma réponse":"1. Relis la consigne et vérifie que ta réponse y répond.\n2. Cherche un indice dans le texte qui prouve ta réponse.\n3. Pour l’orthographe : relis en cherchant chaque accord, du sujet vers le verbe.",
+ "Je bloque sur une notion":"1. Écris ce que tu sais déjà sur cette notion.\n2. Cherche un exemple dans ta leçon.\n3. Fais 4 questions d’entraînement ciblées dans « M’entraîner »."
+};
+const HELP={
+ gram:{m:"1. Repère le verbe conjugué : il t’indique le nombre de propositions.\n2. Pose les questions : qui ? quoi ? où ? quand ? pourquoi ?\n3. Pour une fonction, essaie de supprimer ou de déplacer le groupe de mots.",e:"Exemple sur une autre phrase : « Le livre que tu m’as prêté me plaît. » Le mot « que » est un pronom relatif ; « que tu m’as prêté » complète le nom « livre » : c’est une proposition relative."},
+ conj:{m:"1. Identifie le sujet et le temps demandé.\n2. Retrouve l’infinitif et son groupe.\n3. Écris la terminaison, puis vérifie le radical (verbe irrégulier ?).",e:"Exemple : « finir » au futur, 3e personne du pluriel. Verbe du 2e groupe : infinitif + terminaisons du futur → ils finiront."},
+ orth:{m:"1. Cherche le sujet pour accorder le verbe.\n2. Avec avoir, cherche le COD et sa place pour accorder le participe passé.\n3. Pour un homophone, remplace par un mot de la même famille (a/avait, et/était…).",e:"Exemple : « Les lettres que j’ai (écrire) ». Le COD « que » (= les lettres) est avant le verbe → « écrites »."},
+ lex:{m:"1. Repère le mot dans son contexte.\n2. Cherche un radical, un préfixe ou un suffixe.\n3. Pour une figure de style, demande-toi : que compare-t-on ? qu’est-ce que l’auteur veut montrer ?",e:"Exemple : « Cet élève est une vraie tornade » : métaphore (pas de « comme »). Elle montre son énergie et son agitation."},
+ lect:{m:"1. Lis le texte en entier une première fois.\n2. Surligne les indices (lieu, temps, personnages, émotions).\n3. Justifie toujours ta réponse par un mot ou une phrase du texte.",e:"Exemple : « Ses mains tremblaient. » Indice : le verbe « tremblaient ». Interprétation : le personnage éprouve de la peur ou du froid."},
+ ecr:{m:"1. Écris 3 mots-clés de ton idée au brouillon.\n2. Fais des phrases courtes reliées par des connecteurs.\n3. Relis en cherchant répétitions, ponctuation et accords.",e:"Exemple de paragraphe : idée (« La lecture développe l’imagination ») + explication + exemple + phrase de conclusion."}
+};
+/* Bilan : [[bonne réponse|autre|autre]] — les choix sont mélangés à l’affichage */
+const BILAN={
+ gram:"Une proposition subordonnée [[relative|conjonctive|principale]] est introduite par un pronom relatif (qui, que, dont, où) et complète un [[nom|verbe|adjectif]]. Pour trouver la fonction d’un groupe de mots, je peux le [[déplacer ou le supprimer|souligner deux fois|recopier]].",
+ conj:"Le subjonctif présent s’emploie après « il faut [[que|de|à]] ». Le plus-que-parfait se forme avec l’auxiliaire à l’[[imparfait|futur|impératif]] suivi du [[participe passé|infinitif|radical]].",
+ orth:"Avec l’auxiliaire avoir, le participe passé s’accorde avec le [[COD|sujet|COI]] s’il est placé [[avant|après|loin]] le verbe. Pour distinguer « a » de « à », je remplace par [[avait|avant|ah]].",
+ lex:"Une [[métaphore|comparaison|litote]] rapproche deux éléments sans outil de comparaison. Un [[champ lexical|synonyme|préfixe]] regroupe des mots qui évoquent une même idée. Le préfixe « anti- » signifie [[contre|avant|avec]].",
+ lect:"Un narrateur qui dit « je » et vit l’histoire est un narrateur [[personnage|omniscient|externe]]. Pour répondre à une question de lecture, je dois toujours [[justifier|résumer|inventer]] avec un indice du texte. L’imparfait sert surtout à [[décrire|agir vite|conclure]].",
+ ecr:"Un connecteur comme « cependant » marque l’[[opposition|addition|conséquence]]. Un paragraphe argumentatif contient un argument, une explication et un [[exemple|titre|sommaire]]. Pour éviter une répétition, je peux utiliser un [[pronom|point|tiret]]."
+};
+const META="Sur cette notion, je me sens [[sûr(e) de moi|moyennement sûr(e)|peu sûr(e)]]. Ce qui m’a le plus aidé(e) : [[relire le rappel|essayer au brouillon|chercher un exemple]]. La prochaine fois, je vais [[relire ma leçon|m’entraîner encore|demander de l’aide]].";
+const ITEMS=[
+ {id:"lunettes",n:"Lunettes",xp:40},{id:"boucles",n:"Boucles d’oreilles",xp:80},{id:"echarpe",n:"Écharpe",xp:120},
+ {id:"casquette",n:"Casquette",xp:180},{id:"casque",n:"Casque audio",xp:280},{id:"etoile",n:"Pin’s doré",xp:400},{id:"plume",n:"Stylo plume",xp:500}
+];
+const COLORS=["#3b3fa6","#2d7a4b","#b3432f","#8a5a00","#14213d","#6b3fa0"];
+const SKINS=["#f6dcc4","#e8b88f","#c68a5d","#8d5a3b","#5a3a28"];
+const HAIRC=["#1c1a1a","#5b3a21","#b5651d","#d9b36c","#9a9aa5","#8a3b2a"];
+const HAIRS=[{n:"Court",xp:0},{n:"Long",xp:0},{n:"Rasé",xp:0},{n:"Bouclé",xp:60},{n:"Chignon",xp:150}];
+const BGS=[{c:"var(--line)",xp:0},{c:"#cfe0d4",xp:0},{c:"#e6dcc9",xp:80},{c:"#c9d6ea",xp:160},{c:"#1f2a44",xp:300}];
+
+/* ===== État (sauvegardé sur l’appareil de l’élève, jamais envoyé) ===== */
+let S={xp:0,h:{},conf:{},niv:"4e",skin:1,hs:0,hc:1,top:0,bg:0,worn:[]};
+try{S=Object.assign(S,JSON.parse(localStorage.getItem("tutoria")||"{}"))}catch(e){}
+const save=()=>{try{localStorage.setItem("tutoria",JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s),app=$("#app");
+const lvl=()=>Math.floor(S.xp/100)+1;
+const mast=k=>{const h=S.h[k]||[];return h.length?Math.round(100*h.filter(Boolean).length/h.length):null};
+const weakest=()=>{let w=null,m=101;for(const k in COMP){let v=mast(k);if(S.conf[k]==="peu"&&(v===null||v>60))v=60;if(v!==null&&v<m&&v<75){m=v;w=k}}return w};
+const add=(k,ok)=>{(S.h[k]=S.h[k]||[]).push(ok);S.h[k]=S.h[k].slice(-8);if(ok)S.xp+=10;save()};
+const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+
+function avatar(){
+ const w=id=>S.worn.includes(id),hc=HAIRC[S.hc],sk=SKINS[S.skin],top=COLORS[S.top];
+ const cap=`<path d="M38 52C36 30 47 22 60 22S84 30 82 52C80 44 76 38 70 35C62 38 50 38 46 34C42 38 39 44 38 52z" fill="${hc}"/>`;
+ const hair=[
+  ["",cap],
+  [`<path d="M37 52C35 30 47 22 60 22S85 30 83 52L87 100H33z" fill="${hc}"/>`,cap],
+  ["",""],
+  ["",`<g fill="${hc}"><circle cx="43" cy="38" r="9"/><circle cx="51" cy="29" r="10"/><circle cx="62" cy="26" r="10"/><circle cx="73" cy="30" r="10"/><circle cx="80" cy="40" r="9"/><circle cx="38" cy="50" r="6"/><circle cx="82" cy="50" r="6"/></g>`],
+  ["",cap+`<circle cx="60" cy="17" r="8" fill="${hc}"/>`]
+ ][S.hs]||["",""];
+ return `<svg class="av" viewBox="0 0 120 120" role="img" aria-label="Ton personnage">
+ <rect width="120" height="120" rx="20" fill="${BGS[S.bg].c}"/>
+ ${hair[0]}
+ <circle cx="39" cy="54" r="4.5" fill="${sk}"/><circle cx="81" cy="54" r="4.5" fill="${sk}"/>
+ <rect x="52" y="72" width="16" height="22" rx="6" fill="${sk}"/>
+ <ellipse cx="60" cy="78" rx="9" ry="4" fill="#000" opacity=".14"/>
+ <path d="M18 122c0-24 16-36 36-38l6 9 6-9c20 2 36 14 36 38z" fill="${top}"/>
+ <path d="M54 84l6 9 6-9" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="2"/>
+ <path d="M60 93v29" stroke="#000" stroke-opacity=".12" stroke-width="1.5"/>
+ ${w("echarpe")?'<path d="M42 84c11 8 25 8 36 0l3 11c-13 8-29 8-42 0z" fill="#d9a441"/><path d="M70 92l6 24 9-3-5-22z" fill="#c4902f"/>':""}
+ <ellipse cx="60" cy="52" rx="21" ry="25" fill="${sk}"/>
+ <path d="M42 58c1 14 8 22 18 22s17-8 18-22c-3 9-9 14-18 14s-15-5-18-14z" fill="#000" opacity=".07"/>
+ ${hair[1]}
+ <path d="M46 46q5-3 10-.5M64 45.5q5-2.5 10 .5" fill="none" stroke="${hc}" stroke-width="2" stroke-linecap="round"/>
+ <ellipse cx="51" cy="52" rx="2.4" ry="1.7" fill="#1b2233"/><ellipse cx="69" cy="52" rx="2.4" ry="1.7" fill="#1b2233"/>
+ <path d="M60 54l-2.5 8h4.5" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M54 68q6 2.5 12 0" fill="none" stroke="#1b2233" stroke-opacity=".6" stroke-width="1.8" stroke-linecap="round"/>
+ ${w("boucles")?'<circle cx="39" cy="61" r="2.2" fill="#e3b341"/><circle cx="81" cy="61" r="2.2" fill="#e3b341"/>':""}
+ ${w("lunettes")?'<g fill="none" stroke="#1b2233" stroke-width="1.7"><rect x="44" y="47" width="14" height="10" rx="3.5"/><rect x="62" y="47" width="14" height="10" rx="3.5"/><path d="M58 51h4M44 50l-5-1M76 50l5-1"/></g>':""}
+ ${w("casquette")?'<path d="M39 46C39 27 50 22 60 22S81 27 81 46z" fill="#2b3a55"/><path d="M62 43h32c0 5-6 7-14 7H62z" fill="#223049"/>':""}
+ ${w("casque")?'<path d="M37 54C34 14 86 14 83 54" fill="none" stroke="#1f2937" stroke-width="4"/><rect x="31" y="48" width="9" height="17" rx="4" fill="#1f2937"/><rect x="80" y="48" width="9" height="17" rx="4" fill="#1f2937"/>':""}
+ ${w("etoile")?'<circle cx="38" cy="106" r="4.5" fill="#e3b341" stroke="#1b2233" stroke-width="1"/>':""}
+ ${w("plume")?'<path d="M84 104l6-14" stroke="#e3b341" stroke-width="3.2" stroke-linecap="round"/><path d="M84 104l-1 4" stroke="#1b2233" stroke-width="1.5" stroke-linecap="round"/>':""}
+ </svg>`;
+}
+
+let tab="aide",A={besoin:"",comp:"",img:null,n:0},T=null;
+
+function render(){
+ document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.t===tab));
+ ({aide:vAide,train:vTrain,parcours:vParcours})[tab]();
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;T=null;render();scrollTo(0,0)});
+
+/* ===== Mon aide ===== */
+function vAide(){
+ const ch=(arr,cur)=>arr.map(([v,n])=>`<button class="chip" data-v="${v}" aria-pressed="${cur===v}">${n}</button>`).join("");
+ app.innerHTML=`<h1>Tutor’IA <span class="hl">en Français</span></h1>
+ <p class="mute">Je ne donne pas les réponses : je te guide pour les trouver.</p>
+ <div class="card">
+  <h3>1. Mon besoin</h3><div class="chips" id="bs">${ch(Object.keys(METHODES).map(b=>[b,b]),A.besoin)}</div>
+  <h3>2. La compétence concernée</h3><div class="chips" id="cs">${ch(Object.entries(COMP).map(([k,c])=>[k,c.n]),A.comp)}</div>
+  <div class="row"><label class="btn alt" for="f">Garder une photo de mon exercice</label><input id="f" type="file" accept="image/*" capture="environment" hidden><span class="mute">facultatif, reste sur ton appareil</span></div>
+  <img id="prev" alt="Photo de ton exercice">
+  <button class="btn" id="go" style="margin-top:14px">Voir l’aide</button>
+ </div><div id="out"></div>`;
+ $("#f").onchange=e=>{const f=e.target.files[0];if(f){A.img=URL.createObjectURL(f);$("#prev").src=A.img;$("#prev").style.display="block"}};
+ if(A.img){$("#prev").src=A.img;$("#prev").style.display="block"}
+ $("#bs").onclick=e=>{if(e.target.dataset.v){A.besoin=e.target.dataset.v;[...$("#bs").children].forEach(c=>c.setAttribute("aria-pressed",c===e.target))}};
+ $("#cs").onclick=e=>{if(e.target.dataset.v){A.comp=e.target.dataset.v;[...$("#cs").children].forEach(c=>c.setAttribute("aria-pressed",c===e.target))}};
+ $("#go").onclick=()=>{
+  if(!A.besoin||!A.comp){$("#out").innerHTML='<p class="fb">Choisis ton besoin et la compétence concernée.</p>';return}
+  A.n=1;showAides()};
+ if(A.n)showAides();
+}
+function showAides(){
+ const t=[METHODES[A.besoin],HELP[A.comp].m,HELP[A.comp].e].slice(0,A.n),lab=["Indice 1 : pour démarrer","Indice 2 : la méthode","Indice 3 : un exemple proche"];
+ $("#out").innerHTML=t.map((x,i)=>`<h3>${lab[i]}</h3><div class="indice">${x}</div>`).join("")+
+ `<div class="row">${A.n<3?'<button class="btn alt" id="more">Un autre indice</button>':""}<button class="btn alt" id="toT">M’entraîner sur cette compétence</button></div>`;
+ const m=$("#more");if(m)m.onclick=()=>{A.n++;showAides()};
+ $("#toT").onclick=()=>startQ(A.comp);
+}
+
+/* ===== M'entraîner ===== */
+function vTrain(){
+ if(T)return vQ();
+ const w=weakest();
+ app.innerHTML=`<h1>M’entraîner</h1>`+
+ (w?`<div class="card"><h3>Je te conseille ${COMP[w].n.toLowerCase()}</h3><p class="mute">C’est là que tu progresseras le plus en ce moment.</p><button class="btn" id="rec">Commencer</button></div>`
+ :`<p class="mute">Choisis une compétence. Après quelques séries, je repérerai ce qu’il faut renforcer.</p>`)+
+ Object.entries(COMP).map(([k,c])=>{const m=mast(k);return `<button class="comp" data-k="${k}"><b>${c.n}</b><div class="mute">${c.d}</div><div class="bar"><i style="width:${m||0}%"></i></div></button>`}).join("");
+ app.querySelectorAll(".comp").forEach(b=>b.onclick=()=>startQ(b.dataset.k));
+ if(w)$("#rec").onclick=()=>startQ(w);
+}
+function startQ(k,list){T={k,list:list||shuffle(Q[k]).slice(0,6),i:0,miss:[],step:0,ans:null};tab="train";vTrain()}
+function vQ(){
+ const t=T;
+ if(t.i>=t.list.length)return vEnd();
+ const q=t.list[t.i];
+ app.innerHTML=`<p class="mute">${COMP[t.k].n} · question ${t.i+1} sur ${t.list.length}</p><h2>${q.q}</h2><div id="opts">${shuffle(q.o.map((_,i)=>i)).map(i=>`<button class="opt" data-i="${i}">${q.o[i]}</button>`).join("")}</div><div id="fb"></div>`;
+ $("#opts").onclick=e=>{
+  const b=e.target.closest(".opt");if(!b||t.ans!==null)return;
+  const i=+b.dataset.i,ok=i===q.a;t.ans=i;add(t.k,ok);if(!ok)t.miss.push(q);
+  b.classList.add(ok?"ok":"ko");if(!ok)$("#opts").querySelector(`[data-i="${q.a}"]`).classList.add("ok");
+  $("#fb").innerHTML=`<div class="fb"><b>${ok?"Bien joué, +10 XP.":"Pas tout à fait."}</b><br>${q.r}</div><button class="btn" id="nx">Continuer</button>`;
+  $("#nx").onclick=()=>{t.i++;t.ans=null;vQ()}};
+}
+
+
+/* ===== Fin de série : bilan (métacognition) puis prompt ===== */
+const cloze=(s,ns)=>s.replace(/\[\[(.*?)\]\]/g,(_,x)=>{const o=x.split("|");return `<select data-a="${o[0]}"><option value="">…</option>${(ns?o:shuffle(o)).map(w=>`<option>${w}</option>`).join("")}</select>`});
+function vEnd(){
+ const t=T;if(t.step===2)return vPrompt();
+ const good=t.list.length-t.miss.length;
+ app.innerHTML=`<h1>Série terminée</h1><p>${good} bonne${good>1?"s":""} réponse${good>1?"s":""} sur ${t.list.length}.</p>
+ <div class="card"><h2>Mon bilan</h2><p class="mute">Complète le texte pour vérifier que tu as bien compris.</p>
+ <div id="bz" style="line-height:2.3">${cloze(BILAN[t.k])}</div>
+ <h3 style="margin-top:14px">Et moi, dans tout ça ?</h3><div id="mz" style="line-height:2.3">${cloze(META,1)}</div>
+ <div id="bres"></div><button class="btn" id="bok" style="margin-top:12px">Valider mon bilan</button></div>`;
+ $("#bok").onclick=()=>{
+  const bs=[...$("#bz").querySelectorAll("select")],ms=[...$("#mz").querySelectorAll("select")];
+  if([...bs,...ms].some(x=>!x.value)){$("#bres").innerHTML='<p class="fb">Complète tous les blancs avant de valider.</p>';return}
+  let ok=0;
+  bs.forEach(x=>{const g=x.value===x.dataset.a;if(g)ok++;x.style.borderColor=g?"var(--ok)":"var(--ko)";x.disabled=true;if(!g)x.insertAdjacentHTML("afterend",`<b style="color:var(--ok)"> → ${x.dataset.a}</b>`)});
+  ms.forEach(x=>x.disabled=true);
+  S.conf[t.k]=["sur","moyen","peu"][ms[0].selectedIndex-1];S.xp+=20;save();
+  $("#bres").innerHTML=`<div class="fb"><b>${ok} sur ${bs.length}.</b> ${ok===bs.length?"Tu as bien compris la notion. +20 XP":"Relis les réponses corrigées en vert : c’est ce qu’il faut retenir. +20 XP"}${S.conf[t.k]==="peu"?"<br>Je te proposerai de retravailler cette compétence.":""}</div>`;
+  const b=$("#bok");b.textContent="Continuer";b.onclick=()=>{t.step=2;vPrompt()}};
+}
+function buildPrompt(){
+ const t=T,c=COMP[t.k],err=t.miss.length?t.miss.map(q=>"- "+q.q).join("\n"):"- (aucune erreur : je veux aller plus loin)";
+ return `Tu es un tuteur de français bienveillant pour un élève de ${S.niv} au collège (programme français).\nJe viens de m’entraîner sur la compétence « ${c.n} » (${c.d.toLowerCase()}).\nVoici ce qui m’a posé problème :\n${err}\n\nRègles :\n1. Pose-moi 5 exercices courts, un seul à la fois, du plus simple au plus difficile.\n2. Ne me donne jamais la réponse tout de suite : si je me trompe, donne-moi d’abord un indice, puis laisse-moi réessayer.\n3. Après chaque réponse, rappelle en une phrase la règle à retenir.\n4. À la fin, fais le bilan de mes progrès en trois phrases et dis-moi ce que je dois encore revoir.\nCommence par la première question.`;
+}
+function vPrompt(){
+ const t=T;
+ app.innerHTML=`<h1>Pour continuer chez toi</h1><p class="mute">Copie ce texte et colle-le dans l’assistant d’IA de ton choix (avec l’accord de tes parents) pour t’entraîner encore. Ne donne jamais ton nom ni d’informations personnelles.</p>
+ <div class="chips" id="nv">${["4e","3e"].map(n=>`<button class="chip" data-n="${n}" aria-pressed="${S.niv===n}">Je suis en ${n}</button>`).join("")}</div>
+ <textarea id="pr" readonly aria-label="Prompt à copier" style="min-height:270px">${buildPrompt()}</textarea>
+ <div class="row" style="margin-top:12px"><button class="btn" id="cp">Copier le prompt</button>${t.miss.length?'<button class="btn alt" id="rem">Refaire mes erreurs</button>':""}<button class="btn alt" id="back">Terminer</button></div>`;
+ $("#nv").onclick=e=>{if(e.target.dataset.n){S.niv=e.target.dataset.n;save();vPrompt()}};
+ $("#cp").onclick=()=>{const ta=$("#pr"),done=()=>$("#cp").textContent="Copié ✓";
+  (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(done,()=>{ta.select();try{document.execCommand("copy");done()}catch(e){}})};
+ if(t.miss.length)$("#rem").onclick=()=>startQ(t.k,t.miss);
+ $("#back").onclick=()=>{T=null;vTrain()};
+}
+
+/* ===== Mon parcours ===== */
+let P="visage";
+function vParcours(){
+ const nx=[...ITEMS.map(i=>[i.n,i.xp]),...HAIRS.map(h=>["la coiffure "+h.n.toLowerCase(),h.xp]),...BGS.map((b,i)=>["un nouveau fond",b.xp])].filter(x=>x[1]>S.xp).sort((a,b)=>a[1]-b[1])[0];
+ const sw=(arr,cur,key,xps)=>arr.map((c,i)=>{const x=xps?xps[i]:0,ok=S.xp>=x;return `<button class="sw" style="background:${c}" data-k="${key}" data-v="${i}" ${ok?"":"disabled"} aria-pressed="${cur===i}" aria-label="${ok?"Choisir":"Débloqué à "+x+" XP"}"></button>`}).join("");
+ const chips=(arr,cur,key)=>arr.map((h,i)=>`<button class="chip" data-k="${key}" data-v="${i}" ${S.xp>=h.xp?"":"disabled"} aria-pressed="${cur===i}">${h.n}${S.xp>=h.xp?"":" · "+h.xp+" XP"}</button>`).join("");
+ const pane={
+  visage:`<h3>Peau</h3><div class="row" style="margin-bottom:14px">${sw(SKINS,S.skin,"skin")}</div><h3>Coiffure</h3><div class="chips">${chips(HAIRS,S.hs,"hs")}</div><h3>Couleur des cheveux</h3><div class="row">${sw(HAIRC,S.hc,"hc")}</div>`,
+  style:`<h3>Vêtement</h3><div class="row" style="margin-bottom:14px">${sw(COLORS,S.top,"top")}</div><h3>Fond</h3><div class="row">${sw(BGS.map(b=>b.c),S.bg,"bg",BGS.map(b=>b.xp))}</div>`,
+  objets:`<div class="chips">${ITEMS.map(i=>`<button class="chip" data-i="${i.id}" ${S.xp>=i.xp?"":"disabled"} aria-pressed="${S.worn.includes(i.id)}">${i.n}${S.xp>=i.xp?"":" · "+i.xp+" XP"}</button>`).join("")}</div>`
+ }[P];
+ app.innerHTML=`<h1>Mon parcours</h1><p class="mute">Ces informations ne sont visibles que par toi, sur cet appareil.</p>
+ <div class="card row" style="gap:18px">${avatar()}<div style="flex:1;min-width:150px"><h2>${["Lecteur","Rédacteur","Analyste","Rhéteur","Académicien"][Math.min(lvl()-1,4)]}</h2><p class="mute" style="margin:0">Niveau ${lvl()}</p><p>${S.xp} XP</p>
+ <div class="bar"><i style="width:${S.xp%100}%"></i></div>
+ <p class="mute">${nx?`Prochain déblocage : ${nx[0]} à ${nx[1]} XP.`:"Tout est débloqué."}</p></div></div>
+ <div class="card"><div class="chips" id="seg" role="group" aria-label="Personnalisation">${[["visage","Visage"],["style","Style"],["objets","Objets"]].map(([k,n])=>`<button class="chip" data-p="${k}" aria-pressed="${P===k}">${n}</button>`).join("")}</div><div id="pz">${pane}</div></div>
+ <div class="card"><h3>Mes compétences</h3>${Object.entries(COMP).map(([k,c])=>{const m=mast(k);return `<div style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span>${c.n}</span><span class="mute">${m===null?"pas encore travaillée":m+" %"}</span></div><div class="bar"><i style="width:${m||0}%"></i></div></div>`}).join("")}</div>`;
+ app.querySelector(".card:nth-of-type(2)").onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;
+  if(b.dataset.p)P=b.dataset.p;
+  else if(b.dataset.k)S[b.dataset.k]=+b.dataset.v;
+  else if(b.dataset.i)S.worn=S.worn.includes(b.dataset.i)?S.worn.filter(x=>x!==b.dataset.i):[...S.worn,b.dataset.i];
+  save();vParcours()};
+}
+render();
+</script>
+</body>
+</html>
